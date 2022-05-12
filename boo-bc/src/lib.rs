@@ -45,3 +45,15 @@ pub struct Function {
     /// The function implicitly returns after reaching the last operation.
     pub operations: Vec<Operation>,
 }
+
+/// Represents a program in our bytecode.
+///
+/// This is what gets executed, and what we create proofs for.
+///
+/// At the moment, a program consists of a single function. This function
+/// defines the input and output of the program.
+#[derive(Clone, Debug)]
+pub struct Program {
+    /// The main function, and entry point of the program.
+    pub main: Function,
+}
