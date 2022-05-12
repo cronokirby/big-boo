@@ -1,5 +1,16 @@
 use std::fmt;
 
+/// Represents a typed collection of values.
+///
+/// Programs take different types of values as input. What matters is the order
+/// of values inside each type. The order between types doesn't matter. The
+/// kind of initial secret sharing also affects the type of values.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Values {
+    /// The values for B8.
+    pub b8: Vec<u8>,
+}
+
 /// Represents a single operation in our bytecode.
 ///
 /// Each of the operations manipulates values on the stack, potentially performing
