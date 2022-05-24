@@ -1,3 +1,9 @@
+use bincode::{
+    de::Decoder,
+    enc::Encoder,
+    error::{DecodeError, EncodeError},
+    Decode, Encode,
+};
 use std::fmt;
 
 /// Represents a typed collection of values.
@@ -34,8 +40,39 @@ impl fmt::Display for Operation {
     }
 }
 
+impl Encode for Operation {
+    fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), EncodeError> {
+        use Operation::*;
+
+        let opcode: u8 = match self {
+            Xor => 0x40,
+            And => 0x41,
+        };
+        opcode.encode(encoder)
+    }
+}
+
+impl Decode for Operation {
+    fn decode<D: Decoder>(decoder: &mut D) -> Result<Self, DecodeError> {
+        use Operation::*;
+
+        let opcode = u8::decode(decoder)?;
+        let op = match opcode {
+            0x40 => Xor,
+            0x41 => And,
+            _ => {
+                return Err(DecodeError::OtherString(format!(
+                    "invalid opcode: {}",
+                    opcode
+                )))
+            }
+        };
+        Ok(op)
+    }
+}
+
 /// This describes what inputs a function takes, and what outputs it produces.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Encode, Decode, Debug, PartialEq)]
 pub struct FunctionSignature {
     /// The number of inputs to the function.
     pub inputs: u32,
@@ -47,7 +84,7 @@ pub struct FunctionSignature {
 ///
 /// The function takes inputs on the stack, and produces a certain number
 /// of outputs.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Encode, Decode, Debug, PartialEq)]
 pub struct Function {
     /// The signature describing the inputs and the outputs of this function.
     pub signature: FunctionSignature,
@@ -63,8 +100,38 @@ pub struct Function {
 ///
 /// At the moment, a program consists of a single function. This function
 /// defines the input and output of the program.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Encode, Decode, Debug, PartialEq)]
 pub struct Program {
     /// The main function, and entry point of the program.
     pub main: Function,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use bincode::{config, decode_from_slice, encode_to_vec};
+
+    fn test_encode_roundtrip(program: &Program) {
+        let config = config::standard();
+        let encoded = encode_to_vec(program, config);
+        assert!(encoded.is_ok());
+        let encoded = encoded.unwrap();
+        let decoded = decode_from_slice(&encoded, config);
+        assert!(decoded.is_ok());
+        let (decoded, _): (Program, usize) = decoded.unwrap();
+        assert_eq!(*program, decoded);
+    }
+
+    #[test]
+    fn test_encode_examples() {
+        test_encode_roundtrip(&Program {
+            main: Function {
+                signature: FunctionSignature {
+                    inputs: 3,
+                    outputs: 1,
+                },
+                operations: vec![Operation::Xor, Operation::And],
+            },
+        });
+    }
 }
