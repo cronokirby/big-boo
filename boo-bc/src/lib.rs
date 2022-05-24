@@ -47,7 +47,7 @@ pub struct FunctionSignature {
 ///
 /// The function takes inputs on the stack, and produces a certain number
 /// of outputs.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Function {
     /// The signature describing the inputs and the outputs of this function.
     pub signature: FunctionSignature,
@@ -63,7 +63,7 @@ pub struct Function {
 ///
 /// At the moment, a program consists of a single function. This function
 /// defines the input and output of the program.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Program {
     /// The main function, and entry point of the program.
     pub main: Function,
